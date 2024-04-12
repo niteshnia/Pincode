@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pincode Information</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      margin-bottom: 20px;
+      width: 200px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    input[type="submit"] {
+      padding: 10px 20px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+
+    .pincode-info {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .label {
+      display: inline-block;
+      padding: 5px 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .state {
+      background-color: #2196F3;
+      color: #fff;
+    }
+
+    .district {
+      background-color: #FF9800;
+      color: #fff;
+    }
+
+    .city {
+      background-color: #4CAF50;
+      color: #fff;
+    }
+
+    .city-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .city-list li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>Pincode Information</h2>
+    <input type="text" id="pincodeInput" placeholder="Enter Pincode">
+    <input type="submit" value="Submit" onclick="getPincodeInfo()">
+    <div class="pincode-info" id="pincodeInfo">
+      <!-- Pincode information will be displayed here -->
+    </div>
+    
+  
+  </div>
+
+  <script>
+    // Function to fetch pincode information
+    async function getPincodeInfo() {
+      const pincode = document.getElementById('pincodeInput').value;
+      const url = `https://api.postalpincode.in/pincode/${pincode}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data[0].Status === 'Success') {
+          const postOffice = data[0].PostOffice;
+          const firstOffice = postOffice[0];
+          let stateHTML = `<div class="label state">State: ${firstOffice.State}</div>`;
+          let districtHTML = `<div class="label district">District: ${firstOffice.District}</div>`;
+          let cityListHTML = '<div class="label city">Cities:</div><ul class="city-list">';
+          for (let office of postOffice) {
+            cityListHTML += `<li>${office.Name}</li>`;
+          }
+          cityListHTML += '</ul>';
+
+          // Display pincode information
+          document.getElementById('pincodeInfo').innerHTML = stateHTML + districtHTML + cityListHTML;
+        } else {
+          // Display error message if pincode not found
+          document.getElementById('pincodeInfo').innerHTML = '<p>Pincode not found</p>';
+        }
+      } catch (error) {
+        console.error(error);
+        // Display error message if request fails
+        document.getElementById('pincodeInfo').innerHTML = '<p>Failed to fetch data</p>';
+      }
+    }
+  </script>
+</body>
+
+</html>
