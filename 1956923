@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Address Selection</title>
+  <style> 
+/* CSS code for making input boxes attractive */
+input[type="text"] {
+  padding: 10px;
+  margin: 5px 0;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #4682b4;
+  box-shadow: 0 0 5px rgba(70, 130, 180, 0.5);
+}
+
+/* CSS code for city box with different colors and shadow effect */
+.city-list {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.city {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.city:nth-child(odd) {
+  background-color: skyblue; /* Light salmon */
+}
+
+.city:nth-child(even) {
+  background-color: orangered; /* Sky blue */
+}
+
+/* CSS code for making copy button attractive */
+button {
+  padding: 10px 20px;
+  margin-left: 10px;
+  background-color: limegreen;
+  color: white;
+  border: 2px solid #4682b4;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: #4169e1;
+  border-color: #4169e1;
+}
+
+/* CSS code for stylish border around address box */
+.address-box {
+  background-color: #f0f0f0;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 2px solid #4682b4;
+  border-radius: 10px;
+}
+
+#areaPincode {display: none;} 
+  </style>
+</head>
+<body>
+  <div id="addressBox" class="address-box"></div>
+  <div id="cityList" class="city-list"></div>
+  <input type="text" id="pincodeInput" placeholder="Enter Pincode">
+  <input type="text" id="landmarkInput" placeholder="Enter Landmark">
+  <button id="copyButton" onclick="copyAddress()">Copy</button>
+  <div id="areaPincode" class="pincode"></div>
+
+  <script> 
+    let selectedCity = "";
+    let selectedDistrict = "";
+    let selectedState = "";
+    let selectedLandmark = "";
+    let areaPincode = "";
+
+    // Function to handle click event on city
+    function handleClick(city) {
+      selectedCity = city;
+      updateAddress(selectedState, selectedDistrict, selectedCity, selectedLandmark, areaPincode);
+    }
+
+    // Function to update address box
+    function updateAddress(state, district, city, landmark, pincode) {
+      let address = `STATE: ${state}, DISTRICT: ${district}`;
+      if (city) {
+        address += `, CITY: ${city}`;
+      }
+      if (landmark) {
+        address += `, Landmark: ${landmark}`;
+      }
+      address += `, Pincode: ${pincode}`;
+      document.getElementById("addressBox").innerText = address;
+    }
+
+    // Function to copy address to clipboard
+    function copyAddress() {
+      if (selectedCity) {
+        let addressText = `STATE: ${selectedState}, DISTRICT: ${selectedDistrict}`;
+        if (selectedCity) {
+          addressText += `, CITY: ${selectedCity}`;
+        }
+        if (selectedLandmark) {
+          addressText += `, Landmark: ${selectedLandmark}`;
+        }
+        addressText += `, Pincode: ${areaPincode}`;
+        navigator.clipboard.writeText(addressText)
+          .then(() => alert("Address copied to clipboard!"))
+          .catch(err => console.error("Failed to copy address: ", err));
+      } else {
+        alert("Please select a city first!");
+      }
+    }
+
+    // Function to fetch city data based on Pincode
+    async function fetchCityData(pincode) {
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await response.json();
+      return {
+        cities: data[0].PostOffice.map(post => post.Name),
+        state: data[0].PostOffice[0].State,
+        district: data[0].PostOffice[0].District
+      };
+    }
+
+    // Function to display city list
+    async function displayCityList(pincode) {
+      const { cities, state, district } = await fetchCityData(pincode);
+      selectedState = state;
+      selectedDistrict = district;
+      updateAddress(selectedState, selectedDistrict, selectedCity, selectedLandmark, pincode);
+      displayAreaPincode(pincode);
+
+      const cityListHTML = cities.map(city => `<div class="city" onclick="handleClick('${city}')">${city}</div>`).join("");
+      document.getElementById("cityList").innerHTML = cityListHTML;
+    }
+
+    // Function to display area Pincode
+    function displayAreaPincode(pincode) {
+      areaPincode = pincode;
+      document.getElementById("areaPincode").innerText = `Area Pincode: ${pincode}`;
+    }
+
+    // Event listener for landmark input
+    document.getElementById("landmarkInput").addEventListener("input", function() {
+      selectedLandmark = this.value;
+      updateAddress(selectedState, selectedDistrict, selectedCity, selectedLandmark, areaPincode);
+    });
+
+    // Event listener for pincode input
+    document.getElementById("pincodeInput").addEventListener("input", function() {
+      const pincode = this.value;
+      if (pincode.length === 6) {
+        displayCityList(pincode);
+      }
+    });
+  </script>
+</body>
+</html>
